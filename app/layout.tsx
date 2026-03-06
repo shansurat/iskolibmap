@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Library Hop Checklist",
-  description: "Library Hop Checklist",
+  title: "IskoLibMap",
+  description: "An Unofficial Guide to UP Diliman Libraries",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Library Hop",
+    title: "IskoLibMap",
   },
 };
 
