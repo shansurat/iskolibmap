@@ -113,7 +113,7 @@ export default function App() {
   const handleLibraryClick = (lib: LibraryStop) => {
     setSelectedLibrary(lib);
     // Auto-close sidebar on mobile after selection
-    if (window.innerWidth < 1024) {
+    if (innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
   };
