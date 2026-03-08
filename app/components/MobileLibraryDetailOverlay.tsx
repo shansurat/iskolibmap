@@ -1,31 +1,21 @@
 "use client";
 
 import { X, CheckCircle2, Ticket, Eye } from "lucide-react";
+import type { Library } from "../types/library";
 
-type LibraryStop = {
-  id: number;
-  name: string;
-  coords: [number, number];
-  description: string;
-  college: string;
-  status: "Active" | "Special Stop";
-  hasStamp: boolean;
-  features: string[];
-};
-
-type MobileStopDetailOverlayProps = {
-  selectedLibrary: LibraryStop | null;
+type MobileLibraryDetailOverlayProps = {
+  selectedLibrary: Library | null;
   visited: Set<number>;
   onClose: () => void;
   onToggleVisit: (id: number) => void;
 };
 
-export default function MobileStopDetailOverlay({
+export default function MobileLibraryDetailOverlay({
   selectedLibrary,
   visited,
   onClose,
   onToggleVisit,
-}: MobileStopDetailOverlayProps) {
+}: MobileLibraryDetailOverlayProps) {
   if (!selectedLibrary) {
     return null;
   }

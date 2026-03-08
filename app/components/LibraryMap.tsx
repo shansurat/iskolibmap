@@ -5,24 +5,14 @@ import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { LocateFixed } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-
-type LibraryStop = {
-  id: number;
-  name: string;
-  coords: [number, number];
-  description: string;
-  college: string;
-  status: "Active" | "Special Stop";
-  hasStamp: boolean;
-  features: string[];
-};
+import type { Library } from "../types/library";
 
 function MapController({
   selectedLibrary,
   isSidebarOpen,
   locateTarget,
 }: {
-  selectedLibrary: LibraryStop | null;
+  selectedLibrary: Library | null;
   isSidebarOpen: boolean;
   locateTarget: [number, number] | null;
 }) {
@@ -59,12 +49,12 @@ export default function LibraryMap({
   visitedIds,
   onLibraryClick,
 }: {
-  libraries: LibraryStop[];
-  selectedLibrary: LibraryStop | null;
+  libraries: Library[];
+  selectedLibrary: Library | null;
   isSidebarOpen: boolean;
   showStampPinsOnly: boolean;
   visitedIds: number[];
-  onLibraryClick: (lib: LibraryStop) => void;
+  onLibraryClick: (lib: Library) => void;
 }) {
   const visitedSet = useMemo(() => new Set(visitedIds), [visitedIds]);
   const [currentLocation, setCurrentLocation] = useState<
@@ -256,7 +246,7 @@ export default function LibraryMap({
     );
   };
 
-  const getMarkerIcon = (lib: LibraryStop) => {
+  const getMarkerIcon = (lib: Library) => {
     const isSelected = selectedLibrary?.id === lib.id;
 
     if (!lib.hasStamp) {

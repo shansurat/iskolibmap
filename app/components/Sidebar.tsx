@@ -12,27 +12,17 @@ import {
   Eye,
 } from "lucide-react";
 import PwaInstallButton from "./PwaInstallButton";
-
-type LibraryStop = {
-  id: number;
-  name: string;
-  coords: [number, number];
-  description: string;
-  college: string;
-  status: "Active" | "Special Stop";
-  hasStamp: boolean;
-  features: string[];
-};
+import type { Library } from "../types/library";
 
 type SidebarProps = {
   isSidebarOpen: boolean;
   keyboardInset: number;
-  selectedLibrary: LibraryStop | null;
+  selectedLibrary: Library | null;
   searchQuery: string;
-  filteredLibraries: LibraryStop[];
+  filteredLibraries: Library[];
   visited: Set<number>;
   onSearchQueryChange: (value: string) => void;
-  onLibraryClick: (library: LibraryStop) => void;
+  onLibraryClick: (library: Library) => void;
   onCloseSidebar: () => void;
   onCloseSelectedLibrary: () => void;
   onToggleVisit: (id: number) => void;

@@ -1,26 +1,16 @@
 "use client";
 
 import { Search, X, CheckCircle2, MapPin, Star } from "lucide-react";
-
-type LibraryStop = {
-  id: number;
-  name: string;
-  coords: [number, number];
-  description: string;
-  college: string;
-  status: "Active" | "Special Stop";
-  hasStamp: boolean;
-  features: string[];
-};
+import type { Library } from "../types/library";
 
 type MobileSearchOverlayProps = {
   isOpen: boolean;
   searchQuery: string;
-  filteredLibraries: LibraryStop[];
+  filteredLibraries: Library[];
   visited: Set<number>;
   onSearchQueryChange: (value: string) => void;
   onClose: () => void;
-  onLibrarySelect: (library: LibraryStop) => void;
+  onLibrarySelect: (library: Library) => void;
 };
 
 export default function MobileSearchOverlay({

@@ -7,30 +7,19 @@ import libraryHopListData from "./library-hop-list.json";
 import Sidebar from "./components/Sidebar";
 import MobileHeader from "./components/MobileHeader";
 import MobileSearchOverlay from "./components/MobileSearchOverlay";
-import MobileStopDetailOverlay from "./components/MobileStopDetailOverlay";
+import MobileLibraryDetailOverlay from "./components/MobileLibraryDetailOverlay";
+
+import type { Library } from "./types/library";
 
 const LibraryMap = dynamic(() => import("./components/LibraryMap"), {
   ssr: false,
 });
 
-type LibraryStop = {
-  id: number;
-  name: string;
-  coords: [number, number];
-  description: string;
-  college: string;
-  status: "Active" | "Special Stop";
-  hasStamp: boolean;
-  features: string[];
-};
-
-const LIBRARY_HOP_LIST: LibraryStop[] = libraryHopListData as LibraryStop[];
+const LIBRARY_HOP_LIST: Library[] = libraryHopListData as Library[];
 const VISITED_STORAGE_KEY = "library-hop-visited-stamps";
 
 export default function App() {
-  const [selectedLibrary, setSelectedLibrary] = useState<LibraryStop | null>(
-    null,
-  );
+  const [selectedLibrary, setSelectedLibrary] = useState<Library | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showStampPinsOnly, setShowStampPinsOnly] = useState(true);
@@ -54,7 +43,7 @@ export default function App() {
       (!showStampPinsOnly || lib.hasStamp),
   );
 
-  const handleLibraryClick = (lib: LibraryStop, source: "list" | "map") => {
+  const handleLibraryClick = (lib: Library, source: "list" | "map") => {
     setSelectedLibrary(lib);
     setSelectionSource(source);
     // Auto-close sidebar on mobile after selection
@@ -278,7 +267,7 @@ export default function App() {
             </div>
           </div>
 
-          <MobileStopDetailOverlay
+          <MobileLibraryDetailOverlay
             selectedLibrary={selectedLibrary}
             visited={visited}
             onClose={closeSelectedLibrary}
