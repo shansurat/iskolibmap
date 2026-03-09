@@ -1,45 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import L from "leaflet";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
 import { LocateFixed } from "lucide-react";
-import "leaflet/dist/leaflet.css";
+import "mapbox-gl/dist/mapbox-gl.css";
 import type { Library } from "../types/library";
-
-function MapController({
-  selectedLibrary,
-  isSidebarOpen,
-  locateTarget,
-}: {
-  selectedLibrary: Library | null;
-  isSidebarOpen: boolean;
-  locateTarget: [number, number] | null;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (selectedLibrary) {
-      map.setView(selectedLibrary.coords, 17);
-    }
-  }, [map, selectedLibrary]);
-
-  useEffect(() => {
-    if (locateTarget) {
-      map.setView(locateTarget, 17);
-    }
-  }, [locateTarget, map]);
-
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
-
-    return () => clearTimeout(timerId);
-  }, [map, isSidebarOpen]);
-
-  return null;
-}
 
 export default function LibraryMap({
   libraries,
@@ -56,7 +21,16 @@ export default function LibraryMap({
   visitedIds: number[];
   onLibraryClick: (lib: Library) => void;
 }) {
+  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const libraryMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const visitedSet = useMemo(() => new Set(visitedIds), [visitedIds]);
+  const visibleLibraries = useMemo(
+    () => libraries.filter((lib) => !showStampPinsOnly || lib.hasStamp),
+    [libraries, showStampPinsOnly],
+  );
   const [currentLocation, setCurrentLocation] = useState<
     [number, number] | null
   >(null);
@@ -86,53 +60,171 @@ export default function LibraryMap({
     };
   }, []);
 
-  const markerIcons = useMemo(
-    () => ({
-      green: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white" style="background:#014421"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-      }),
-      greenSelected: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-10 h-10 rounded-full border-4 border-[#f1c40f] shadow-xl flex items-center justify-center text-white" style="background:#014421"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-      }),
-      red: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white" style="background:#7b1113"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-      }),
-      redSelected: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-10 h-10 rounded-full border-4 border-[#f1c40f] shadow-xl flex items-center justify-center text-white" style="background:#7b1113"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-      }),
-      gray: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white" style="background:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-      }),
-      graySelected: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-10 h-10 rounded-full border-4 border-[#f1c40f] shadow-xl flex items-center justify-center text-white" style="background:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-      }),
-      blue: L.divIcon({
-        className: "custom-div-icon",
-        html: `<div class="w-6 h-6 rounded-full border-2 border-white shadow-lg" style="background:#2563eb"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-      }),
-    }),
-    [],
-  );
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) {
+      return;
+    }
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      center: [121.0715, 14.6535],
+      zoom: 16,
+      attributionControl: false,
+      style: "mapbox://styles/mapbox/light-v11",
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      libraryMarkersRef.current.forEach((marker) => marker.remove());
+      libraryMarkersRef.current = [];
+
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    if (selectedLibrary) {
+      map.flyTo({
+        center: [selectedLibrary.coords[1], selectedLibrary.coords[0]],
+        zoom: 17,
+        duration: 500,
+      });
+    }
+  }, [selectedLibrary]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map || !locateTarget) {
+      return;
+    }
+
+    map.flyTo({
+      center: [locateTarget[1], locateTarget[0]],
+      zoom: 17,
+      duration: 500,
+    });
+  }, [locateTarget]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      map.resize();
+    }, 250);
+
+    return () => clearTimeout(timerId);
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    libraryMarkersRef.current.forEach((marker) => marker.remove());
+    libraryMarkersRef.current = [];
+
+    const iconSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>';
+
+    visibleLibraries.forEach((lib) => {
+      const isSelected = selectedLibrary?.id === lib.id;
+      const isVisited = visitedSet.has(lib.id);
+
+      const color = !lib.hasStamp
+        ? "#64748b"
+        : isVisited
+          ? "#014421"
+          : "#7b1113";
+      const size = isSelected ? 40 : 32;
+      const borderWidth = isSelected ? 4 : 2;
+      const borderColor = isSelected ? "#f1c40f" : "#ffffff";
+      const shadow = isSelected
+        ? "0 10px 20px rgba(15, 23, 42, 0.35)"
+        : "0 6px 12px rgba(15, 23, 42, 0.25)";
+
+      const el = document.createElement("div");
+      el.style.width = `${size}px`;
+      el.style.height = `${size}px`;
+      el.style.borderRadius = "9999px";
+      el.style.background = color;
+      el.style.border = `${borderWidth}px solid ${borderColor}`;
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.color = "white";
+      el.style.boxShadow = shadow;
+      el.style.cursor = "pointer";
+      el.style.zIndex = isSelected ? "1000" : "1";
+      el.innerHTML = iconSvg;
+      el.setAttribute("aria-label", lib.name);
+
+      el.addEventListener("click", () => onLibraryClick(lib));
+
+      const marker = new mapboxgl.Marker({
+        element: el,
+        anchor: "bottom",
+      })
+        .setLngLat([lib.coords[1], lib.coords[0]])
+        .addTo(map);
+
+      libraryMarkersRef.current.push(marker);
+    });
+  }, [onLibraryClick, selectedLibrary, visibleLibraries, visitedSet]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    if (!currentLocation) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const markerEl = document.createElement("div");
+    markerEl.style.width = "24px";
+    markerEl.style.height = "24px";
+    markerEl.style.borderRadius = "9999px";
+    markerEl.style.background = "#2563eb";
+    markerEl.style.border = "2px solid #ffffff";
+    markerEl.style.boxShadow = "0 6px 12px rgba(15, 23, 42, 0.25)";
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+    }
+
+    userMarkerRef.current = new mapboxgl.Marker({
+      element: markerEl,
+      anchor: "center",
+    })
+      .setLngLat([currentLocation[1], currentLocation[0]])
+      .addTo(map);
+  }, [currentLocation]);
 
   const handleLocateMe = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -246,55 +338,9 @@ export default function LibraryMap({
     );
   };
 
-  const getMarkerIcon = (lib: Library) => {
-    const isSelected = selectedLibrary?.id === lib.id;
-
-    if (!lib.hasStamp) {
-      return isSelected ? markerIcons.graySelected : markerIcons.gray;
-    }
-
-    if (visitedSet.has(lib.id)) {
-      return isSelected ? markerIcons.greenSelected : markerIcons.green;
-    }
-
-    return isSelected ? markerIcons.redSelected : markerIcons.red;
-  };
-
   return (
     <div className="relative h-full w-full">
-      <MapContainer
-        center={[14.6535, 121.0715]}
-        zoom={16}
-        zoomControl={false}
-        className="h-full w-full"
-        attributionControl={false}
-      >
-        <TileLayer
-          attribution="&copy; [OpenStreetMap contributors](https://openstreetmap.org)"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
-        <MapController
-          selectedLibrary={selectedLibrary}
-          isSidebarOpen={isSidebarOpen}
-          locateTarget={locateTarget}
-        />
-        {currentLocation && (
-          <Marker position={currentLocation} icon={markerIcons.blue} />
-        )}
-        {libraries
-          .filter((lib) => !showStampPinsOnly || lib.hasStamp)
-          .map((lib) => (
-            <Marker
-              key={lib.id}
-              position={lib.coords}
-              icon={getMarkerIcon(lib)}
-              zIndexOffset={selectedLibrary?.id === lib.id ? 1000 : 0}
-              eventHandlers={{
-                click: () => onLibraryClick(lib),
-              }}
-            />
-          ))}
-      </MapContainer>
+      <div ref={mapContainerRef} className="h-full w-full" />
 
       <div className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-1000 flex flex-col items-end gap-2 lg:right-4 lg:top-4 lg:bottom-auto">
         <button
@@ -306,7 +352,9 @@ export default function LibraryMap({
           disabled={isLocating}
         >
           <span className="lg:hidden">
-            <LocateFixed className={`size-4 ${isLocating ? "animate-pulse" : ""}`} />
+            <LocateFixed
+              className={`size-4 ${isLocating ? "animate-pulse" : ""}`}
+            />
           </span>
           <span className="hidden lg:inline">
             {isLocating ? "Locating..." : "Locate me"}
