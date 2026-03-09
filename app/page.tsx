@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import dynamic from "next/dynamic";
-import libraryHopListData from "./library-hop-list.json";
+import libraryHopListData from "./libraries.json";
 import Sidebar from "./components/Sidebar";
 import MobileHeader from "./components/MobileHeader";
 import MobileSearchOverlay from "./components/MobileSearchOverlay";
